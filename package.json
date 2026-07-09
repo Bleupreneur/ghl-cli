@@ -1,0 +1,68 @@
+{
+  "name": "@bleupreneur/ghl-cli",
+  "version": "0.1.0",
+  "description": "Token-light GoHighLevel CLI — the full v2 public API as shell commands, generated from the official OpenAPI specs. Authenticate with a Private Integration Token. Built for AI agents (Claude Code) and power users: one Bash tool, ~0 idle context cost, discover everything on demand via --help.",
+  "type": "module",
+  "bin": {
+    "ghl": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "spec",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsup src/cli.ts --format esm --target node22 --clean --shims --out-dir dist",
+    "dev": "tsx src/cli.ts",
+    "gen": "tsx scripts/gen.ts",
+    "sync-specs": "bash scripts/sync-specs.sh",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src scripts test",
+    "lint:fix": "biome check --write src scripts test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm run gen && pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "keywords": [
+    "gohighlevel",
+    "ghl",
+    "leadconnector",
+    "crm",
+    "cli",
+    "ai-agents",
+    "claude-code",
+    "openapi"
+  ],
+  "author": "bleupreneur",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bleupreneur/ghl-cli.git"
+  },
+  "homepage": "https://github.com/bleupreneur/ghl-cli#readme",
+  "bugs": {
+    "url": "https://github.com/bleupreneur/ghl-cli/issues"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "dependencies": {
+    "commander": "^13.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.9",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

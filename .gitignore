@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Test coverage
+coverage/
+
+# Local config (NEVER commit credentials)
+.env
+.env.local
+*.local
+ghl.config.json
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.log
+
+# Scratch
+/tmp/
+.cache/
+
+# Audit outputs & client deliverables — contain PII (contact names, phones, replies). NEVER commit.
+reports/
+*.docx
+*-report.md
+*-conversion-report.md
+*-messages-and-responses.csv
+*-playbook-*.md

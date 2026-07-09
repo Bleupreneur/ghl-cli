@@ -1,0 +1,82 @@
+name: Sync GHL OpenAPI specs
+
+on:
+  schedule:
+    # Every Monday at 06:17 UTC
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Refresh specs and regenerate operations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync specs from upstream
+        run: pnpm sync-specs
+
+      - name: Regenerate operations
+        run: pnpm gen
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git status --porcelain spec/ src/generated/ | grep -q .; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            SPEC_CHANGES=$(git status --porcelain spec/ | wc -l | tr -d ' ')
+            echo "spec_changes=$SPEC_CHANGES" >> "$GITHUB_OUTPUT"
+            # Count operations in the newly generated file
+            OPS=$(grep -c 'id:' src/generated/operations.ts || echo 0)
+            echo "ops_count=$OPS" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open PR if specs changed
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/sync-ghl-specs
+          delete-branch: true
+          title: 'chore: sync GHL OpenAPI specs'
+          body: |
+            ## Automated spec sync
+
+            This PR was opened by the weekly `sync-specs.yml` workflow.
+
+            **Changes:**
+            - Spec files updated: ${{ steps.changes.outputs.spec_changes }}
+            - Operations in generated file: ~${{ steps.changes.outputs.ops_count }}
+
+            **What to check before merging:**
+            - [ ] `pnpm typecheck` passes (CI will verify)
+            - [ ] `pnpm test` passes (CI will verify)
+            - [ ] Review any renamed or removed `operationId`s in `spec/` — these become renamed/removed CLI commands
+            - [ ] If a command name changed, update `docs/usage.md` and `docs/recipes.md` accordingly
+
+            **Never hand-edit `src/generated/operations.ts`.**
+            If codegen produced a bad command name, fix `scripts/gen.ts` and re-run `pnpm gen`.
+          commit-message: 'chore: sync GHL OpenAPI specs and regenerate operations'
+          labels: 'automated,specs'
